@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
   "name": "bePresent",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "short_name": "bePresent",
   "description": "Block distracting feeds so you can be present",
   "minimum_chrome_version": "116",
   "icons": {
@@ -11,13 +12,21 @@
     "128": "icon-128.png"
   },
   "permissions": ["storage", "tabs"],
-  "host_permissions": ["*://*.instagram.com/*", "*://*.x.com/*"],
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://*.x.com/*",
+    "*://*.youtube.com/*"
+  ],
   "background": {
     "service_worker": "service-worker.global.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.instagram.com/*", "*://*.x.com/*"],
+      "matches": [
+        "*://*.instagram.com/*",
+        "*://*.x.com/*",
+        "*://*.youtube.com/*"
+      ],
       "js": ["content-script.global.js"],
       "run_at": "document_start"
     }
@@ -38,7 +47,11 @@
   "web_accessible_resources": [
     {
       "resources": ["icon-128.png"],
-      "matches": ["*://*.instagram.com/*", "*://*.x.com/*"]
+      "matches": [
+        "*://*.instagram.com/*",
+        "*://*.x.com/*",
+        "*://*.youtube.com/*"
+      ]
     }
   ]
 }

@@ -24,21 +24,25 @@ function isBlockablePage(): boolean {
     return true;
   }
 
+  // YouTube: block Shorts
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
+    return window.location.pathname.startsWith("/shorts");
+  }
+
   return false;
 }
 
 function getSiteName(): string {
   const hostname = window.location.hostname.replace(/^www\./, "");
   if (hostname === "x.com" || hostname.endsWith(".x.com")) return "X";
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com"))
+    return "YouTube Shorts";
   return "Instagram Reels";
 }
 
 function getBlockMessage(): string {
   const site = getSiteName();
-  if (site === "X") {
-    return "X is blocked right now. Close this tab and get back to what matters.";
-  }
-  return "Reels are blocked right now. Close this tab and get back to what matters.";
+  return `${site} is blocked right now. Close this tab and get back to what matters.`;
 }
 
 function getOverlay(): HTMLElement | null {

@@ -1,81 +1,65 @@
-# Privacy Policy for Claude Blocker
+# Privacy Policy — bePresent
 
-**Last updated:** December 2024
+**Last updated:** March 2026
 
 ## Overview
 
-Claude Blocker is a productivity tool that blocks distracting websites when Claude Code is not actively working. This privacy policy explains what data is collected and how it's used.
+bePresent is a Chrome extension that blocks doomscroll feeds on social media while Claude Code is running. This policy explains what data the extension accesses and how it's handled.
 
 ## Data Collection
 
-### What We Collect
+**bePresent does not collect, transmit, or sell any user data.**
 
-Claude Blocker collects and stores the following data **locally on your device**:
+No analytics, telemetry, tracking pixels, or third-party scripts are included.
 
-1. **Blocked Domains List** — The websites you configure to be blocked (default: x.com, youtube.com)
-2. **Bypass State** — Whether you've used your daily emergency bypass, and when it expires
-3. **Last Bypass Date** — The date of your last bypass usage (to enforce once-per-day limit)
+## Data Stored Locally
 
-### What We Don't Collect
+The extension stores a small amount of data on your device using the Chrome Storage API (`chrome.storage.sync`):
 
-- No browsing history
-- No personal information
-- No analytics or telemetry
-- No usage statistics
-- No data sent to external servers
+| Data | Purpose |
+|------|---------|
+| Enabled/disabled toggle | Remembers whether blocking is active |
+| Bypass timestamp | Tracks when your daily 5-minute bypass expires |
+| Last bypass date | Prevents reuse of the bypass on the same day |
 
-## Data Storage
+If you have Chrome Sync enabled, this data syncs across your Chrome devices via your Google account. It never leaves your Google account.
 
-All data is stored using Chrome's `chrome.storage.sync` API:
+## Network Activity
 
-- **Local storage** — Data is stored on your device
-- **Chrome sync** — If you have Chrome sync enabled, your blocked domains list will sync across your devices via your Google account
-- **No external servers** — We do not operate any servers that receive your data
-
-## Server Communication
-
-The extension communicates only with a **local server running on your machine** (`localhost:8765`). This server:
+The extension communicates **only** with a local server running on `localhost:8765` on your machine. This server:
 
 - Runs entirely on your computer
 - Never connects to the internet
 - Only receives hook notifications from Claude Code running on your machine
 
-## Third-Party Services
+**No data is sent to any external server, API, or third party.**
 
-Claude Blocker does not use any third-party services, analytics, or tracking.
+## Permissions
+
+| Permission | Why it's needed |
+|------------|----------------|
+| `storage` | Save toggle state and bypass status |
+| `tabs` | Broadcast state updates to open tabs |
+| Host access (Instagram, X, YouTube) | Inject the blocking overlay on these sites |
+
+## Host Permissions
+
+The extension runs content scripts on:
+
+- `*.instagram.com` — to block Reels
+- `*.x.com` — to block the feed
+- `*.youtube.com` — to block Shorts
+
+The extension does **not** read, collect, or transmit any content from these sites. It only injects a visual overlay to block the feed.
 
 ## Data Deletion
 
-To delete all Claude Blocker data:
+Uninstalling the extension removes all stored data. You can also clear it manually via Chrome → Extensions → bePresent → Details → Clear Data.
 
-1. Open Chrome extension settings
-2. Click on Claude Blocker → "Remove"
-3. All locally stored data will be deleted
+## Changes
 
-Alternatively, clear the extension's storage via Chrome DevTools.
-
-## Permissions Explained
-
-| Permission | Why We Need It |
-|------------|----------------|
-| `storage` | Store your blocked domains list and bypass state |
-| `tabs` | Send state updates to open tabs when blocking status changes |
-| `<all_urls>` | Inject the blocking modal on any website you configure |
-
-## Children's Privacy
-
-Claude Blocker is not directed at children under 13 and does not knowingly collect data from children.
-
-## Changes to This Policy
-
-We may update this privacy policy from time to time. Changes will be posted to this page with an updated revision date.
+If this policy changes, the update will be reflected here with a new date.
 
 ## Contact
 
-For questions about this privacy policy, please open an issue at:
-https://github.com/t3-content/claude-blocker/issues
-
-## Open Source
-
-Claude Blocker is open source software. You can review the complete source code at:
-https://github.com/t3-content/claude-blocker
+For questions about this privacy policy, open an issue on the [GitHub repository](https://github.com/KanishkKundu05/BePresent_Extension).

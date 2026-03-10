@@ -1,89 +1,92 @@
 export {};
 
-const MODAL_ID = "claude-blocker-modal";
-const TOAST_ID = "claude-blocker-toast";
-const DEFAULT_DOMAINS = ["x.com", "youtube.com"];
+const OVERLAY_ID = "bepresent-overlay";
 
-// State shape from service worker
 interface PublicState {
-  serverConnected: boolean;
-  sessions: number;
-  working: number;
-  waitingForInput: number;
+  enabled: boolean;
   blocked: boolean;
   bypassActive: boolean;
 }
 
-// Track current state so we can re-render if modal gets removed
 let lastKnownState: PublicState | null = null;
-let shouldBeBlocked = false;
-let blockedDomains: string[] = [];
-let toastDismissed = false;
+let shouldBlock = false;
 
-// Load domains from storage
-function loadDomains(): Promise<string[]> {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(["blockedDomains"], (result) => {
-      if (result.blockedDomains && Array.isArray(result.blockedDomains)) {
-        resolve(result.blockedDomains);
-      } else {
-        resolve(DEFAULT_DOMAINS);
-      }
-    });
-  });
-}
-
-function isBlockedDomain(): boolean {
+function isBlockablePage(): boolean {
   const hostname = window.location.hostname.replace(/^www\./, "");
-  return blockedDomains.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+
+  // Instagram: block reels
+  if (hostname === "instagram.com" || hostname.endsWith(".instagram.com")) {
+    return window.location.pathname.startsWith("/reels");
+  }
+
+  // X: block the whole feed
+  if (hostname === "x.com" || hostname.endsWith(".x.com")) {
+    return true;
+  }
+
+  return false;
 }
 
-function getModal(): HTMLElement | null {
-  return document.getElementById(MODAL_ID);
+function getSiteName(): string {
+  const hostname = window.location.hostname.replace(/^www\./, "");
+  if (hostname === "x.com" || hostname.endsWith(".x.com")) return "X";
+  return "Instagram Reels";
+}
+
+function getBlockMessage(): string {
+  const site = getSiteName();
+  if (site === "X") {
+    return "X is blocked right now. Close this tab and get back to what matters.";
+  }
+  return "Reels are blocked right now. Close this tab and get back to what matters.";
+}
+
+function getOverlay(): HTMLElement | null {
+  return document.getElementById(OVERLAY_ID);
 }
 
 function getShadow(): ShadowRoot | null {
-  return getModal()?.shadowRoot ?? null;
+  return getOverlay()?.shadowRoot ?? null;
 }
 
-function createModal(): void {
-  if (getModal()) return;
+function createOverlay(): void {
+  if (getOverlay()) return;
 
   const container = document.createElement("div");
-  container.id = MODAL_ID;
+  container.id = OVERLAY_ID;
   const shadow = container.attachShadow({ mode: "open" });
 
-  // Use inline styles with bulletproof Arial font (won't change when page loads custom fonts)
   shadow.innerHTML = `
-    <div style="all:initial;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;z-index:2147483647;-webkit-font-smoothing:antialiased;">
-      <div style="all:initial;background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:40px;max-width:480px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;">
-        <svg style="width:64px;height:64px;margin-bottom:24px;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="11" width="18" height="11" rx="2" fill="#FFD700" stroke="#B8860B" stroke-width="1"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#888" stroke-width="2" fill="none"/>
-        </svg>
-        <div style="color:#fff;font-size:24px;font-weight:bold;margin:0 0 16px;line-height:1.2;">Time to Work</div>
-        <div id="message" style="color:#888;font-size:16px;line-height:1.5;margin:0 0 24px;font-weight:normal;">Loading...</div>
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:#2a2a2a;border-radius:20px;font-size:14px;color:#666;line-height:1;">
-          <span id="dot" style="width:8px;height:8px;border-radius:50%;background:#666;flex-shrink:0;"></span>
-          <span id="status" style="color:#666;font-size:14px;font-family:Arial,Helvetica,sans-serif;">...</span>
-        </div>
-        <div id="hint" style="margin-top:24px;font-size:13px;color:#555;line-height:1.4;font-family:Arial,Helvetica,sans-serif;"></div>
-        <button id="bypass-btn" style="all:initial;margin-top:24px;padding:12px 24px;background:#333;border:1px solid #444;border-radius:8px;color:#888;font-family:Arial,Helvetica,sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;">
-          Give me 5 minutes (1x per day)
+    <div style="all:initial;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:16px;line-height:1.5;z-index:2147483647;-webkit-font-smoothing:antialiased;">
+      <div style="all:initial;display:flex;flex-direction:column;align-items:center;max-width:420px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;">
+        <img id="logo" style="width:80px;height:80px;margin-bottom:28px;border-radius:18px;" />
+        <div style="color:#fff;font-size:28px;font-weight:700;margin:0 0 12px;line-height:1.2;letter-spacing:-0.5px;">be present</div>
+        <div id="block-msg" style="color:#888;font-size:16px;line-height:1.6;margin:0 0 32px;font-weight:normal;max-width:320px;">Loading...</div>
+        <button id="bypass-btn" style="all:initial;padding:14px 28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.5);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;">
+          5 min bypass (1x per day)
         </button>
       </div>
     </div>
   `;
 
+  // Set logo and message
+  const logo = shadow.getElementById("logo") as HTMLImageElement;
+  if (logo) {
+    logo.src = chrome.runtime.getURL("icon-128.png");
+  }
+  const blockMsg = shadow.getElementById("block-msg");
+  if (blockMsg) {
+    blockMsg.textContent = getBlockMessage();
+  }
+
   // Wire up bypass button
   const bypassBtn = shadow.getElementById("bypass-btn");
   if (bypassBtn) {
-    // Check if already used today
     chrome.runtime.sendMessage({ type: "GET_BYPASS_STATUS" }, (status) => {
       if (status?.usedToday) {
         bypassBtn.textContent = "Bypass already used today";
         (bypassBtn as HTMLButtonElement).disabled = true;
-        bypassBtn.style.opacity = "0.5";
+        bypassBtn.style.opacity = "0.3";
         bypassBtn.style.cursor = "not-allowed";
       }
     });
@@ -91,78 +94,52 @@ function createModal(): void {
     bypassBtn.addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "ACTIVATE_BYPASS" }, (response) => {
         if (response?.success) {
-          removeModal();
+          removeOverlay();
         } else if (response?.reason) {
           bypassBtn.textContent = response.reason;
           (bypassBtn as HTMLButtonElement).disabled = true;
-          bypassBtn.style.opacity = "0.5";
+          bypassBtn.style.opacity = "0.3";
           bypassBtn.style.cursor = "not-allowed";
         }
       });
     });
 
-    // Hover effect
     bypassBtn.addEventListener("mouseenter", () => {
       if (!(bypassBtn as HTMLButtonElement).disabled) {
-        bypassBtn.style.background = "#444";
-        bypassBtn.style.color = "#aaa";
+        bypassBtn.style.background = "rgba(255,255,255,0.12)";
+        bypassBtn.style.color = "rgba(255,255,255,0.7)";
       }
     });
     bypassBtn.addEventListener("mouseleave", () => {
-      bypassBtn.style.background = "#333";
-      bypassBtn.style.color = "#888";
+      bypassBtn.style.background = "rgba(255,255,255,0.08)";
+      bypassBtn.style.color = "rgba(255,255,255,0.5)";
     });
   }
 
-  // Mount to documentElement (html) instead of body - more resilient to React hydration
   document.documentElement.appendChild(container);
 }
 
-function removeModal(): void {
-  getModal()?.remove();
+function removeOverlay(): void {
+  getOverlay()?.remove();
 }
 
-function getToast(): HTMLElement | null {
-  return document.getElementById(TOAST_ID);
+// Block scroll on the reels page
+function blockReelsScroll(): void {
+  document.documentElement.style.overflow = "hidden";
+  document.body.style.overflow = "hidden";
 }
 
-function showToast(): void {
-  if (getToast() || toastDismissed) return;
-
-  const container = document.createElement("div");
-  container.id = TOAST_ID;
-  const shadow = container.attachShadow({ mode: "open" });
-
-  shadow.innerHTML = `
-    <div style="all:initial;position:fixed;bottom:24px;right:24px;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#fff;z-index:2147483647;display:flex;align-items:center;gap:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);-webkit-font-smoothing:antialiased;">
-      <span style="font-size:18px;">💬</span>
-      <span>Claude has a question for you!</span>
-      <button id="dismiss" style="all:initial;margin-left:8px;padding:4px 8px;background:#333;border:none;border-radius:6px;color:#888;font-family:Arial,Helvetica,sans-serif;font-size:12px;cursor:pointer;">Dismiss</button>
-    </div>
-  `;
-
-  const dismissBtn = shadow.getElementById("dismiss");
-  dismissBtn?.addEventListener("click", () => {
-    toastDismissed = true;
-    removeToast();
-  });
-
-  document.documentElement.appendChild(container);
+function unblockReelsScroll(): void {
+  document.documentElement.style.overflow = "";
+  document.body.style.overflow = "";
 }
 
-function removeToast(): void {
-  getToast()?.remove();
-}
-
-// Watch for our modal being removed by the page and re-add it
+// Watch for overlay removal and re-add it
 function setupMutationObserver(): void {
   const observer = new MutationObserver(() => {
-    if (shouldBeBlocked && !getModal()) {
-      // Modal was removed but should exist - re-create it
-      createModal();
-      if (lastKnownState) {
-        renderState(lastKnownState);
-      }
+    if (shouldBlock && isBlockablePage() && !getOverlay()) {
+      createOverlay();
+      blockReelsScroll();
     }
   });
 
@@ -172,86 +149,18 @@ function setupMutationObserver(): void {
   });
 }
 
-function setDotColor(dot: HTMLElement, color: "green" | "red" | "gray"): void {
-  const colors = {
-    green: "background:#22c55e;box-shadow:0 0 8px #22c55e;",
-    red: "background:#ef4444;box-shadow:0 0 8px #ef4444;",
-    gray: "background:#666;box-shadow:none;",
-  };
-  dot.style.cssText = `width:8px;height:8px;border-radius:50%;flex-shrink:0;${colors[color]}`;
-}
-
-function renderState(state: PublicState): void {
-  const shadow = getShadow();
-  if (!shadow) return;
-
-  const message = shadow.getElementById("message");
-  const dot = shadow.getElementById("dot");
-  const status = shadow.getElementById("status");
-  const hint = shadow.getElementById("hint");
-  if (!message || !dot || !status || !hint) return;
-
-  if (!state.serverConnected) {
-    message.textContent = "Server offline. Start the blocker server to continue.";
-    setDotColor(dot, "red");
-    status.textContent = "Server Offline";
-    hint.innerHTML = `Run <span style="background:#2a2a2a;padding:2px 8px;border-radius:4px;font-family:ui-monospace,monospace;font-size:12px;">npx claude-blocker</span> to start`;
-  } else if (state.sessions === 0) {
-    message.textContent = "No Claude Code sessions detected.";
-    setDotColor(dot, "green");
-    status.textContent = "Waiting for Claude Code";
-    hint.textContent = "Open a terminal and start Claude Code";
-  } else {
-    message.textContent = "Your job finished!";
-    setDotColor(dot, "green");
-    status.textContent = `${state.sessions} session${state.sessions > 1 ? "s" : ""} idle`;
-    hint.textContent = "Type a prompt in Claude Code to unblock";
-  }
-}
-
-function renderError(): void {
-  const shadow = getShadow();
-  if (!shadow) return;
-
-  const message = shadow.getElementById("message");
-  const dot = shadow.getElementById("dot");
-  const status = shadow.getElementById("status");
-  const hint = shadow.getElementById("hint");
-  if (!message || !dot || !status || !hint) return;
-
-  message.textContent = "Cannot connect to extension.";
-  setDotColor(dot, "red");
-  status.textContent = "Extension Error";
-  hint.textContent = "Try reloading the extension";
-}
-
 // Handle state updates from service worker
 function handleState(state: PublicState): void {
   lastKnownState = state;
 
-  if (!isBlockedDomain()) {
-    shouldBeBlocked = false;
-    removeModal();
-    removeToast();
-    return;
-  }
-
-  // Show toast notification when Claude has a question (non-blocking)
-  if (state.waitingForInput > 0) {
-    showToast();
+  if (state.blocked && isBlockablePage()) {
+    shouldBlock = true;
+    createOverlay();
+    blockReelsScroll();
   } else {
-    toastDismissed = false; // Reset so next question can show toast
-    removeToast();
-  }
-
-  // Show blocking modal when truly idle
-  if (state.blocked) {
-    shouldBeBlocked = true;
-    createModal();
-    renderState(state);
-  } else {
-    shouldBeBlocked = false;
-    removeModal();
+    shouldBlock = false;
+    removeOverlay();
+    unblockReelsScroll();
   }
 }
 
@@ -259,10 +168,7 @@ function handleState(state: PublicState): void {
 function requestState(): void {
   chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
     if (chrome.runtime.lastError || !response) {
-      // Service worker not ready, retry
       setTimeout(requestState, 500);
-      createModal();
-      renderError();
       return;
     }
     handleState(response);
@@ -274,23 +180,30 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "STATE") {
     handleState(message);
   }
-  if (message.type === "DOMAINS_UPDATED") {
-    blockedDomains = message.domains;
-    // Re-evaluate if we should be blocked
+});
+
+// Watch for SPA navigation (Instagram is an SPA)
+let lastPath = window.location.pathname;
+const pathObserver = new MutationObserver(() => {
+  if (window.location.pathname !== lastPath) {
+    lastPath = window.location.pathname;
     if (lastKnownState) {
       handleState(lastKnownState);
     }
   }
 });
 
-// Initialize
-async function init(): Promise<void> {
-  blockedDomains = await loadDomains();
+function init(): void {
+  setupMutationObserver();
+  requestState();
 
-  if (isBlockedDomain()) {
-    setupMutationObserver();
-    createModal();
-    requestState();
+  // Observe DOM changes to detect SPA navigation
+  if (document.body) {
+    pathObserver.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      pathObserver.observe(document.body, { childList: true, subtree: true });
+    });
   }
 }
 

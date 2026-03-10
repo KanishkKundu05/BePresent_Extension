@@ -1,48 +1,37 @@
 export {};
 
 interface PopupState {
+  enabled: boolean;
   blocked: boolean;
-  serverConnected: boolean;
-  sessions: number;
-  working: number;
   bypassActive: boolean;
 }
 
-const statusDot = document.getElementById("status-dot") as HTMLElement;
+const toggleBtn = document.getElementById("toggle-btn") as HTMLButtonElement;
+const toggleLabel = document.getElementById("toggle-label") as HTMLElement;
+const toggleTrack = document.getElementById("toggle-track") as HTMLElement;
+const toggleThumb = document.getElementById("toggle-thumb") as HTMLElement;
 const statusText = document.getElementById("status-text") as HTMLElement;
-const sessionsEl = document.getElementById("sessions") as HTMLElement;
-const workingEl = document.getElementById("working") as HTMLElement;
-const blockBadge = document.getElementById("block-badge") as HTMLElement;
-const blockStatus = document.getElementById("block-status") as HTMLElement;
 const settingsBtn = document.getElementById("settings-btn") as HTMLButtonElement;
 
 function updateUI(state: PopupState): void {
-  // Status indicator
-  if (!state.serverConnected) {
-    statusDot.className = "status-dot disconnected";
-    statusText.textContent = "Offline";
-  } else if (state.working > 0) {
-    statusDot.className = "status-dot working";
-    statusText.textContent = "Working";
-  } else {
-    statusDot.className = "status-dot connected";
-    statusText.textContent = "Connected";
-  }
+  if (state.enabled) {
+    toggleLabel.textContent = "On";
+    toggleTrack.classList.add("active");
+    toggleThumb.classList.add("active");
 
-  // Stats
-  sessionsEl.textContent = String(state.sessions);
-  workingEl.textContent = String(state.working);
-
-  // Block badge
-  if (state.bypassActive) {
-    blockBadge.className = "block-badge bypass";
-    blockStatus.textContent = "Bypass";
-  } else if (state.blocked) {
-    blockBadge.className = "block-badge blocked";
-    blockStatus.textContent = "Blocked";
+    if (state.bypassActive) {
+      statusText.textContent = "Bypass active";
+      statusText.className = "status-text bypass";
+    } else {
+      statusText.textContent = "Feeds are blocked";
+      statusText.className = "status-text blocking";
+    }
   } else {
-    blockBadge.className = "block-badge open";
-    blockStatus.textContent = "Open";
+    toggleLabel.textContent = "Off";
+    toggleTrack.classList.remove("active");
+    toggleThumb.classList.remove("active");
+    statusText.textContent = "Feeds are allowed";
+    statusText.className = "status-text";
   }
 }
 
@@ -53,6 +42,14 @@ function refreshState(): void {
     }
   });
 }
+
+toggleBtn.addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "TOGGLE" }, (state: PopupState) => {
+    if (state) {
+      updateUI(state);
+    }
+  });
+});
 
 settingsBtn.addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
@@ -65,4 +62,3 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 refreshState();
-setInterval(refreshState, 5000);

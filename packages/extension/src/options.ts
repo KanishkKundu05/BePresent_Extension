@@ -1,12 +1,8 @@
 export {};
 
-const DEFAULT_DOMAINS = ["x.com", "youtube.com"];
-
 interface ExtensionState {
+  enabled: boolean;
   blocked: boolean;
-  serverConnected: boolean;
-  sessions: number;
-  working: number;
   bypassActive: boolean;
 }
 
@@ -19,163 +15,35 @@ interface BypassStatus {
 // Elements
 const statusIndicator = document.getElementById("status-indicator") as HTMLElement;
 const statusText = document.getElementById("status-text") as HTMLElement;
-const sessionsEl = document.getElementById("sessions") as HTMLElement;
-const workingEl = document.getElementById("working") as HTMLElement;
-const blockStatusEl = document.getElementById("block-status") as HTMLElement;
-const blockingCard = document.getElementById("blocking-card") as HTMLElement;
-const addForm = document.getElementById("add-form") as HTMLFormElement;
-const domainInput = document.getElementById("domain-input") as HTMLInputElement;
-const domainList = document.getElementById("domain-list") as HTMLUListElement;
-const siteCount = document.getElementById("site-count") as HTMLElement;
+const powerBtn = document.getElementById("power-btn") as HTMLButtonElement;
+const powerLabel = document.getElementById("power-label") as HTMLElement;
+const powerTrack = document.getElementById("power-track") as HTMLElement;
+const powerThumb = document.getElementById("power-thumb") as HTMLElement;
 const bypassBtn = document.getElementById("bypass-btn") as HTMLButtonElement;
 const bypassText = document.getElementById("bypass-text") as HTMLElement;
 const bypassStatus = document.getElementById("bypass-status") as HTMLElement;
 
 let bypassCountdown: ReturnType<typeof setInterval> | null = null;
-let currentDomains: string[] = [];
-
-// Load domains from storage
-async function loadDomains(): Promise<string[]> {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(["blockedDomains"], (result) => {
-      if (result.blockedDomains && Array.isArray(result.blockedDomains)) {
-        resolve(result.blockedDomains);
-      } else {
-        chrome.storage.sync.set({ blockedDomains: DEFAULT_DOMAINS });
-        resolve(DEFAULT_DOMAINS);
-      }
-    });
-  });
-}
-
-// Save domains to storage
-async function saveDomains(domains: string[]): Promise<void> {
-  return new Promise((resolve) => {
-    chrome.storage.sync.set({ blockedDomains: domains }, () => {
-      // Notify all tabs about the change
-      chrome.tabs.query({}, (tabs) => {
-        for (const tab of tabs) {
-          if (tab.id) {
-            chrome.tabs.sendMessage(tab.id, { type: "DOMAINS_UPDATED", domains }).catch(() => {});
-          }
-        }
-      });
-      resolve();
-    });
-  });
-}
-
-// Normalize domain input
-function normalizeDomain(input: string): string {
-  let domain = input.toLowerCase().trim();
-  domain = domain.replace(/^https?:\/\//, "");
-  domain = domain.replace(/^www\./, "");
-  domain = domain.replace(/\/.*$/, "");
-  return domain;
-}
-
-// Validate domain format
-function isValidDomain(domain: string): boolean {
-  const regex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/;
-  return regex.test(domain);
-}
-
-// Render the domain list
-function renderDomains(): void {
-  domainList.innerHTML = "";
-  siteCount.textContent = String(currentDomains.length);
-
-  if (currentDomains.length === 0) {
-    const empty = document.createElement("li");
-    empty.className = "empty-state";
-    domainList.appendChild(empty);
-    return;
-  }
-
-  for (const domain of currentDomains) {
-    const li = document.createElement("li");
-    li.className = "domain-item";
-
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "domain-name";
-    nameSpan.textContent = domain;
-
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "remove-btn";
-    removeBtn.title = "Remove site";
-    removeBtn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    `;
-    removeBtn.addEventListener("click", () => removeDomain(domain));
-
-    li.appendChild(nameSpan);
-    li.appendChild(removeBtn);
-    domainList.appendChild(li);
-  }
-}
-
-// Add a domain
-async function addDomain(raw: string): Promise<void> {
-  const domain = normalizeDomain(raw);
-
-  if (!domain) return;
-
-  if (!isValidDomain(domain)) {
-    domainInput.classList.add("error");
-    setTimeout(() => domainInput.classList.remove("error"), 400);
-    return;
-  }
-
-  if (currentDomains.includes(domain)) {
-    domainInput.value = "";
-    return;
-  }
-
-  currentDomains.push(domain);
-  currentDomains.sort();
-  await saveDomains(currentDomains);
-  renderDomains();
-  domainInput.value = "";
-}
-
-// Remove a domain
-async function removeDomain(domain: string): Promise<void> {
-  currentDomains = currentDomains.filter((d) => d !== domain);
-  await saveDomains(currentDomains);
-  renderDomains();
-}
 
 // Update UI with extension state
 function updateUI(state: ExtensionState): void {
-  // Status badge
-  if (!state.serverConnected) {
-    statusIndicator.className = "status-indicator disconnected";
-    statusText.textContent = "Offline";
-  } else if (state.working > 0) {
-    statusIndicator.className = "status-indicator working";
-    statusText.textContent = "Claude Working";
+  if (state.enabled) {
+    statusIndicator.className = "status-indicator active";
+    statusText.textContent = "Blocking Reels";
+    powerLabel.textContent = "On";
+    powerTrack.classList.add("active");
+    powerThumb.classList.add("active");
   } else {
-    statusIndicator.className = "status-indicator connected";
-    statusText.textContent = "Connected";
+    statusIndicator.className = "status-indicator";
+    statusText.textContent = "Inactive";
+    powerLabel.textContent = "Off";
+    powerTrack.classList.remove("active");
+    powerThumb.classList.remove("active");
   }
 
-  // Stats
-  sessionsEl.textContent = String(state.sessions);
-  workingEl.textContent = String(state.working);
-
-  // Block status
   if (state.bypassActive) {
-    blockStatusEl.textContent = "Bypassed";
-    blockStatusEl.style.color = "var(--accent-amber)";
-  } else if (state.blocked) {
-    blockStatusEl.textContent = "Blocking";
-    blockStatusEl.style.color = "var(--accent-red)";
-  } else {
-    blockStatusEl.textContent = "Open";
-    blockStatusEl.style.color = "var(--accent-green)";
+    statusIndicator.className = "status-indicator bypass";
+    statusText.textContent = "Bypass Active";
   }
 }
 
@@ -194,7 +62,7 @@ function updateBypassButton(status: BypassStatus): void {
       const remaining = Math.max(0, Math.ceil((status.bypassUntil! - Date.now()) / 1000));
       const minutes = Math.floor(remaining / 60);
       const seconds = remaining % 60;
-      bypassText.textContent = `Bypass Active · ${minutes}:${seconds.toString().padStart(2, "0")}`;
+      bypassText.textContent = `Bypass Active \u00b7 ${minutes}:${seconds.toString().padStart(2, "0")}`;
 
       if (remaining <= 0) {
         if (bypassCountdown) clearInterval(bypassCountdown);
@@ -234,9 +102,12 @@ function refreshState(): void {
 }
 
 // Event listeners
-addForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  addDomain(domainInput.value);
+powerBtn.addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "TOGGLE" }, (state: ExtensionState) => {
+    if (state) {
+      updateUI(state);
+    }
+  });
 });
 
 bypassBtn.addEventListener("click", () => {
@@ -257,13 +128,5 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 // Initialize
-async function init(): Promise<void> {
-  currentDomains = await loadDomains();
-  renderDomains();
-  refreshState();
-}
-
-init();
-
-// Refresh periodically
+refreshState();
 setInterval(refreshState, 5000);

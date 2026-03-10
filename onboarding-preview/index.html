@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bePresent — Chrome Extension Onboarding</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #EBEBEB;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Phone frame */
+    .phone-frame {
+      width: 393px;
+      height: 852px;
+      background: #fff;
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 0 0 8px #1a1a1a, 0 24px 80px rgba(0,0,0,0.25);
+      position: relative;
+    }
+
+    .phone-inner {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0 24px 32px;
+      overflow-y: auto;
+    }
+
+    /* Badge */
+    .top-badge {
+      padding-top: 60px;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #F0F4FF;
+      padding: 8px 16px;
+      border-radius: 100px;
+    }
+    .badge-pill span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #003BFF;
+    }
+
+    /* Headline */
+    .headline {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .headline h1 {
+      font-size: 34px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+    .headline h1 em {
+      color: #003BFF;
+      font-style: normal;
+    }
+    .headline p {
+      font-size: 16px;
+      font-weight: 400;
+      color: #777;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    /* Mockups */
+    .mockups {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      align-items: flex-start;
+      margin-bottom: 28px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Browser frame */
+    .browser-frame {
+      flex: 1;
+      max-width: 220px;
+      background: #1a1a1a;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #333;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    }
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      background: #2a2a2a;
+      gap: 6px;
+    }
+    .browser-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .browser-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .browser-dots span:nth-child(1) { background: #ff5f57; }
+    .browser-dots span:nth-child(2) { background: #febc2e; }
+    .browser-dots span:nth-child(3) { background: #28c840; }
+    .browser-url {
+      flex: 1;
+      background: #1a1a1a;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 9px;
+      color: #666;
+      text-align: center;
+    }
+
+    /* Block overlay mock */
+    .block-overlay {
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 16px;
+      min-height: 160px;
+    }
+    .block-overlay-inner { text-align: center; }
+    .block-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      background: #003BFF;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .block-title { color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .block-desc { color: #888; font-size: 10px; line-height: 1.4; max-width: 160px; margin: 0 auto 12px; }
+    .block-bypass {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: rgba(255,255,255,0.45);
+      font-size: 9px;
+    }
+    .mock-caption {
+      text-align: center;
+      font-size: 11px;
+      color: #999;
+      margin-top: 8px;
+    }
+
+    /* Popup mock */
+    .popup-mock {
+      background: #000;
+      border-radius: 10px;
+      padding: 12px;
+      width: 160px;
+      border: 1px solid #333;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    }
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .popup-logo {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: #003BFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+    .popup-name { color: #fff; font-size: 12px; font-weight: 600; }
+    .popup-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1c1c1e;
+      border-radius: 7px;
+      padding: 9px 10px;
+      margin-bottom: 6px;
+    }
+    .popup-toggle-label { color: #fff; font-size: 11px; font-weight: 500; }
+    .popup-track {
+      width: 30px;
+      height: 18px;
+      border-radius: 9px;
+      background: #333;
+      position: relative;
+    }
+    .popup-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+    }
+    .popup-status {
+      text-align: center;
+      font-size: 9px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .popup-settings {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1c1c1e;
+      border-radius: 5px;
+      padding: 7px 9px;
+    }
+    .popup-settings-label { color: #fff; font-size: 10px; font-weight: 500; }
+    .popup-settings-arrow { color: #666; font-size: 9px; }
+
+    /* Steps */
+    .steps-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: #F9F9F9;
+      border-radius: 16px;
+    }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #003BFF;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: #777;
+      line-height: 1.4;
+    }
+
+    /* Buttons */
+    .cta-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background: #003BFF;
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-size: 20px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 0 0 #00249B;
+      letter-spacing: -0.01em;
+    }
+    .btn-plain {
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      color: #000;
+      border: none;
+      border-radius: 100px;
+      font-size: 20px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="phone-inner">
+      <!-- Badge -->
+      <div class="top-badge">
+        <div class="badge-pill">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#F1F1F1" stroke="#E0E0E0" stroke-width="0.5"/>
+            <path d="M12 7.5A4.5 4.5 0 0 0 8.05 10H2.5A9.5 9.5 0 0 1 18.8 5.2L15.3 11.3A4.48 4.48 0 0 0 12 7.5z" fill="#DB4437"/>
+            <path d="M15.3 11.3l3.5-6.1A9.5 9.5 0 0 1 12 21.5l3.5-6.1A4.5 4.5 0 0 0 15.3 11.3z" fill="#0F9D58"/>
+            <path d="M8.05 10l-3.5 6.1A9.5 9.5 0 0 1 2.5 10h5.55z" fill="#FFCD40"/>
+            <path d="M12 15.4l-3.5 6.1A9.5 9.5 0 0 1 4.55 16.1L8.05 10A4.5 4.5 0 0 0 12 15.4z" fill="#4285F4"/>
+            <circle cx="12" cy="12" r="3.2" fill="white"/>
+            <circle cx="12" cy="12" r="2.2" fill="#4285F4"/>
+          </svg>
+          <span>New</span>
+        </div>
+      </div>
+
+      <!-- Headline -->
+      <div class="headline">
+        <h1>Bring bePresent to <em>your laptop.</em></h1>
+        <p>Download our Chrome extension to block Instagram reels and X on desktop too.</p>
+      </div>
+
+      <!-- Mockups -->
+      <div class="mockups">
+        <!-- Blocking overlay -->
+        <div style="flex:1;max-width:220px;">
+          <div class="browser-frame">
+            <div class="browser-bar">
+              <div class="browser-dots"><span></span><span></span><span></span></div>
+              <div class="browser-url">instagram.com/reels</div>
+            </div>
+            <div class="block-overlay">
+              <div class="block-overlay-inner">
+                <div class="block-logo">be<br>present</div>
+                <div class="block-title">be present</div>
+                <div class="block-desc">Reels are blocked right now. Close this tab and get back to what matters.</div>
+                <div class="block-bypass">5 min bypass (1x per day)</div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-caption">Blocks reels & X feed</div>
+        </div>
+
+        <!-- Popup -->
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="popup-mock">
+            <div class="popup-header">
+              <div class="popup-logo">be<br>present</div>
+              <span class="popup-name">bePresent</span>
+            </div>
+            <div class="popup-toggle-row">
+              <span class="popup-toggle-label">Off</span>
+              <div class="popup-track"><div class="popup-thumb"></div></div>
+            </div>
+            <div class="popup-status">Feeds are allowed</div>
+            <div class="popup-settings">
+              <span class="popup-settings-label">Settings</span>
+              <span class="popup-settings-arrow">&rsaquo;</span>
+            </div>
+          </div>
+          <div class="mock-caption">One-click toggle</div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Open Chrome Web Store</div>
+            <div class="step-desc">Tap the button below to go straight there.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Add to Chrome</div>
+            <div class="step-desc">Click 'Add to Chrome' and confirm.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Toggle it on</div>
+            <div class="step-desc">Click the bePresent icon in your toolbar and flip the switch.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="cta-stack">
+        <button class="btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#F1F1F1" stroke="#E0E0E0" stroke-width="0.5"/>
+            <path d="M12 7.5A4.5 4.5 0 0 0 8.05 10H2.5A9.5 9.5 0 0 1 18.8 5.2L15.3 11.3A4.48 4.48 0 0 0 12 7.5z" fill="#DB4437"/>
+            <path d="M15.3 11.3l3.5-6.1A9.5 9.5 0 0 1 12 21.5l3.5-6.1A4.5 4.5 0 0 0 15.3 11.3z" fill="#0F9D58"/>
+            <path d="M8.05 10l-3.5 6.1A9.5 9.5 0 0 1 2.5 10h5.55z" fill="#FFCD40"/>
+            <path d="M12 15.4l-3.5 6.1A9.5 9.5 0 0 1 4.55 16.1L8.05 10A4.5 4.5 0 0 0 12 15.4z" fill="#4285F4"/>
+            <circle cx="12" cy="12" r="3.2" fill="white"/>
+            <circle cx="12" cy="12" r="2.2" fill="#4285F4"/>
+          </svg>
+          Get the extension
+        </button>
+        <button class="btn-plain">Skip for now</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

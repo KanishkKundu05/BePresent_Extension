@@ -3,31 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Claude Blocker</title>
+    <title>bePresent</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <div class="status-row">
-          <span class="status-dot" id="status-dot"></span>
-          <span class="status-label" id="status-text">Connecting</span>
-        </div>
-        <div class="block-badge" id="block-badge">
-          <span id="block-status">—</span>
-        </div>
+        <img class="logo" src="icon-48.png" alt="bePresent" />
+        <span class="title">bePresent</span>
       </div>
 
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-value" id="sessions">0</span>
-          <span class="stat-label">sessions</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" id="working">0</span>
-          <span class="stat-label">working</span>
-        </div>
-      </div>
+      <button class="toggle-btn" id="toggle-btn">
+        <span class="toggle-label" id="toggle-label">Off</span>
+        <span class="toggle-track" id="toggle-track">
+          <span class="toggle-thumb" id="toggle-thumb"></span>
+        </span>
+      </button>
+
+      <div class="status-text" id="status-text">Feeds are allowed</div>
 
       <button class="settings-btn" id="settings-btn">
         Settings

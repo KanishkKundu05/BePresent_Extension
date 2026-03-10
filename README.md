@@ -1,8 +1,16 @@
-# Claude Blocker
+# bePresent
 
-Block distracting websites unless [Claude Code](https://claude.ai/claude-code) is actively running inference.
+A Chrome extension that blocks doomscroll feeds while [Claude Code](https://claude.ai/claude-code) is running — so you stay focused instead of falling into infinite scroll.
 
-**The premise is simple:** if Claude is working, you should be too. When Claude stops, your distractions come back.
+**The idea:** if Claude is working, you should be too. When Claude stops, your feeds come back.
+
+## Blocked Platforms
+
+| Platform | What's blocked |
+|----------|---------------|
+| Instagram | Reels (`/reels`) |
+| YouTube | Shorts (`/shorts`) |
+| X (Twitter) | Entire feed |
 
 ## How It Works
 
@@ -11,16 +19,11 @@ Block distracting websites unless [Claude Code](https://claude.ai/claude-code) i
 │   Claude Code   │ ─────────────► │  Blocker Server │ ◄─────────────► │ Chrome Extension│
 │   (terminal)    │                │  (localhost)    │                 │   (browser)     │
 └─────────────────┘                └─────────────────┘                 └─────────────────┘
-       │                                   │                                   │
-       │ UserPromptSubmit                  │ tracks sessions                   │ blocks sites
-       │ PreToolUse                        │ broadcasts state                  │ shows modal
-       │ Stop                              │                                   │ bypass button
-       └───────────────────────────────────┴───────────────────────────────────┘
 ```
 
-1. **Claude Code hooks** notify the server when you submit a prompt or when Claude finishes
+1. **Claude Code hooks** notify a local server when you submit a prompt or Claude finishes
 2. **Blocker server** tracks all Claude Code sessions and their working/idle states
-3. **Chrome extension** blocks configured sites when no session is actively working
+3. **Chrome extension** overlays blocked feeds when no session is actively working
 
 ## Quick Start
 
@@ -30,62 +33,38 @@ Block distracting websites unless [Claude Code](https://claude.ai/claude-code) i
 npx claude-blocker --setup
 ```
 
-This installs the Claude Code hooks and starts the server. The hooks are configured in `~/.claude/settings.json`.
+This installs the Claude Code hooks and starts the server on `localhost:8765`.
 
 ### 2. Install the Chrome extension
 
-- Download from [Chrome Web Store](#) *(coming soon)*
-- Or load unpacked from `packages/extension/dist`
+- Load unpacked from `packages/extension/dist`
 
-### 3. Configure blocked sites
+### 3. Use it
 
-Click the extension icon → Settings to add sites you want blocked when Claude is idle.
+Toggle blocking on/off from the extension popup. When Claude Code is working, your feeds are unblocked. When Claude is idle, they're blocked.
 
-Default blocked sites: `x.com`, `youtube.com`
+## Features
+
+- **Soft blocking** — modal overlay, not a hard block
+- **Real-time** — no page refresh needed when state changes
+- **Multi-session** — tracks multiple Claude Code instances
+- **Emergency bypass** — 5-minute bypass, once per day
+- **SPA-aware** — detects navigation within Instagram and YouTube
 
 ## Server CLI
 
 ```bash
-# Start with auto-setup (recommended for first run)
-npx claude-blocker --setup
-
-# Start on custom port
-npx claude-blocker --port 9000
-
-# Remove hooks from Claude Code settings
-npx claude-blocker --remove
-
-# Show help
-npx claude-blocker --help
+npx claude-blocker --setup     # Start with auto-setup
+npx claude-blocker --port 9000 # Custom port
+npx claude-blocker --remove    # Remove hooks
+npx claude-blocker --help      # Show help
 ```
-
-## Features
-
-- **Soft blocking** — Sites show a modal overlay, not a hard block
-- **Real-time updates** — No page refresh needed when state changes
-- **Multi-session support** — Tracks multiple Claude Code instances
-- **Emergency bypass** — 5-minute bypass, once per day
-- **Configurable sites** — Add/remove sites from extension settings
-- **Works offline** — Blocks everything when server isn't running (safety default)
-
-## Requirements
-
-- Node.js 18+
-- Chrome (or Chromium-based browser)
-- [Claude Code](https://claude.ai/claude-code)
 
 ## Development
 
 ```bash
-# Clone and install
-git clone https://github.com/t3-content/claude-blocker.git
-cd claude-blocker
 pnpm install
-
-# Build everything
 pnpm build
-
-# Development mode
 pnpm dev
 ```
 
@@ -93,19 +72,19 @@ pnpm dev
 
 ```
 packages/
-├── server/      # Node.js server + CLI (published to npm)
+├── server/      # Node.js server + CLI
 ├── extension/   # Chrome extension (Manifest V3)
 └── shared/      # Shared TypeScript types
 ```
 
 ## Privacy
 
-- **No data collection** — All data stays on your machine
-- **Local only** — Server runs on localhost, no external connections
-- **Chrome sync** — Blocked sites list syncs via your Chrome account (if enabled)
-
-See [PRIVACY.md](PRIVACY.md) for full privacy policy.
+All data stays on your machine. The server runs on localhost only. See [PRIVACY.md](PRIVACY.md).
 
 ## License
 
-MIT © [Theo Browne](https://github.com/t3dotgg)
+MIT
+
+---
+
+Forked from [Claude Blocker](https://github.com/t3-content/claude-blocker) by Theo Browne. Source: [KanishkKundu05/BePresent_Extension](https://github.com/KanishkKundu05/BePresent_Extension).

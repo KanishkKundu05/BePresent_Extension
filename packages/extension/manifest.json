@@ -12,11 +12,6 @@
     "128": "icon-128.png"
   },
   "permissions": ["storage"],
-  "host_permissions": [
-    "*://*.instagram.com/*",
-    "*://*.x.com/*",
-    "*://*.youtube.com/*"
-  ],
   "background": {
     "service_worker": "service-worker.global.js"
   },

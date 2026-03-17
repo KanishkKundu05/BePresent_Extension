@@ -177,17 +177,15 @@
       </p>
 
       <h2>Network Activity</h2>
-      <p>
-        The extension communicates only with a local service running on <code>localhost</code> on
-        your own machine to determine whether blocking should be active.
-      </p>
+      <p><strong>bePresent makes no network requests.</strong></p>
       <ul>
-        <li>The local service runs entirely on your device.</li>
         <li>No data is sent to external servers, APIs, advertisers, or analytics providers.</li>
         <li>No browsing history or page content is transmitted by bePresent.</li>
+        <li>All logic runs entirely on your device.</li>
       </ul>
 
       <h2>Permissions</h2>
+      <p>bePresent requests a single Chrome permission:</p>
       <table>
         <thead>
           <tr>
@@ -200,15 +198,13 @@
             <td><code>storage</code></td>
             <td>Saves the on/off state and bypass timing locally.</td>
           </tr>
-          <tr>
-            <td>Host permissions for Instagram, X, and YouTube</td>
-            <td>Injects the blocking overlay only on supported sites.</td>
-          </tr>
         </tbody>
       </table>
 
-      <h2>Host Access</h2>
-      <p>bePresent runs content scripts on the following domains:</p>
+      <h2>Content Scripts</h2>
+      <p>
+        bePresent declares content scripts in the manifest that run on the following domains:
+      </p>
       <ul>
         <li><code>*.instagram.com</code> to block Reels</li>
         <li><code>*.x.com</code> to block the feed</li>
@@ -216,7 +212,7 @@
       </ul>
       <p>
         The extension does not collect or transmit content from those sites. It only injects a
-        visual blocking interface and updates it when your local state changes.
+        visual blocking overlay and updates it based on your locally stored preferences.
       </p>
 
       <h2>Data Deletion</h2>

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "bePresent",
+  "name": "BePresent",
   "version": "0.0.2",
-  "short_name": "bePresent",
-  "description": "Block distracting feeds so you can be present",
+  "short_name": "BePresent",
+  "description": "Stay present — blocks distracting feeds on Instagram, YouTube, and X",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icon-16.png",
@@ -28,7 +28,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "bePresent",
+    "default_title": "BePresent",
     "default_icon": {
       "16": "icon-16.png",
       "32": "icon-32.png",
